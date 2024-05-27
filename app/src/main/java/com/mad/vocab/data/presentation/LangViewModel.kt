@@ -3,6 +3,7 @@ package com.mad.vocab.data.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mad.vocab.data.LangRepo
+import com.mad.vocab.data.RetroInstance
 import com.mad.vocab.data.models.LangObj
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -21,7 +22,7 @@ class LangViewModel(
 //    val lan: LiveData<String> get() = _lang
 
     private val _lang = MutableStateFlow<List<LangObj>>(emptyList())
-    val lan = _lang.asStateFlow()
+    val lan = _lang
 
     private val _showErrorToast = Channel<Boolean>()
     val showErrorToast = _showErrorToast.receiveAsFlow()
@@ -29,6 +30,9 @@ class LangViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean>
         get() = _isRefreshing.asStateFlow()
+
+    private val _postResponse = MutableStateFlow<LangObj?>(null)
+    val postResponse: StateFlow<LangObj?> = _postResponse
 
     init {
         refreshAndLoad()
@@ -57,8 +61,14 @@ class LangViewModel(
         }
     }
 
-//    private suspend fun getLang() {
-//        _lang.value = RetroInstance.api.getLangList().toString();
-//    }
+    fun create(post: LangObj) {
+        viewModelScope.launch {
+            try {
+                val response = RetroInstance.api.addLang(post).body()
+                _postResponse.value = response
+                refreshAndLoad()
+            } catch (e: Exception) {}
+        }
+    }
 
 }

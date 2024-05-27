@@ -6,8 +6,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetroInstance {
-//    const val BASE_URL = "http://192.168.178.11:3000/"
-//    const val BASE_URL = "http://localhost:3120/"
+//    const val BASE_URL = "http://192.168.178.106:3300/"
+//    const val BASE_URL = "http://localhost:3300/"
     const val BASE_URL = "https://vocab-api-render.onrender.com/"
 
     private val inceptor: HttpLoggingInterceptor = HttpLoggingInterceptor().apply {
