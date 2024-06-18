@@ -34,6 +34,9 @@ class LangViewModel(
     private val _postResponse = MutableStateFlow<LangObj?>(null)
     val postResponse: StateFlow<LangObj?> = _postResponse
 
+    private val _updateStatus = MutableStateFlow<String?>(null)
+    val updateStatus: StateFlow<String?> = _updateStatus
+
     init {
         refreshAndLoad()
     }
@@ -45,19 +48,7 @@ class LangViewModel(
             delay(2000L)
             _isRefreshing.value = false
 
-            langRepo.getLangList().collectLatest {
-                    result ->
-                when(result) {
-                    is com.mad.vocab.data.Result.Error -> {
-                        _showErrorToast.send(true)
-                    }
-                    is com.mad.vocab.data.Result.Success -> {
-                        result.data?.let {langs ->
-                            _lang.update { langs }
-                        }
-                    }
-                }
-            }
+            getVocab()
         }
     }
 
@@ -71,4 +62,62 @@ class LangViewModel(
         }
     }
 
+    fun update(nlWord: String, post: LangObj) {
+        viewModelScope.launch {
+            try {
+                val response = RetroInstance.api.updateLang(nlWord, post).body()
+                _postResponse.value = response
+                refreshAndLoad()
+                _updateStatus.value = "Updated $nlWord"
+            } catch (e: Exception) {
+                _updateStatus.value = "Update failed: ${e.message}"
+            }
+        }
+    }
+
+    suspend fun getVocab() {
+        langRepo.getLangList().collectLatest {
+                result ->
+            when(result) {
+                is com.mad.vocab.data.Result.Error -> {
+                    _showErrorToast.send(true)
+                }
+                is com.mad.vocab.data.Result.Success -> {
+                    result.data?.let {langs ->
+                        _lang.update { langs }
+                    }
+                }
+            }
+        }
+    }
+
+    fun search(searchTxt: String) {
+        viewModelScope.launch {
+            try {
+                langRepo.getSearchList(searchTxt).collectLatest { result ->
+                    when (result) {
+                        is com.mad.vocab.data.Result.Error -> {
+                            _showErrorToast.send(true)
+                        }
+                        is com.mad.vocab.data.Result.Success -> {
+                            if(result.data?.isEmpty() == true) {
+                                _updateStatus.value = "No results found for $searchTxt"
+                                refreshAndLoad()
+                                return@collectLatest
+                            }
+                            result.data?.let { langs ->
+                                _lang.update { langs }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _updateStatus.value = "Update failed: ${e.message}"
+            }
+        }
+    }
+
+    fun clearUpdateStatus() {
+        _updateStatus.value = null
+    }
 }

@@ -4,7 +4,5 @@ data class LangObj(
     val dutch: String,
     val engels: String,
     val notes: String? = "",
-    val sentences: String? = "",
-    val createdAt: String? = "",
-    val updatedAt: String? = ""
+    val sentences: String? = ""
 )
